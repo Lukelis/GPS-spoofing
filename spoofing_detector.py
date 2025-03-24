@@ -26,10 +26,15 @@ def detect_spoofing(vessel_df, speed_threshold=100, jump_distance_km=50, jump_ti
     vessel_df["time_prev"] = vessel_df["timestamp"].shift()
     vessel_df.dropna(subset=["lat_prev", "lon_prev", "time_prev"], inplace=True)
 
+    # Calculate time differences first
+    vessel_df["time_diff_sec"] = (vessel_df["timestamp"] - vessel_df["time_prev"]).dt.total_seconds()
+
+    # Filter out zero time differences to avoid division by zero
+    vessel_df = vessel_df[vessel_df["time_diff_sec"] > 0]
+
     # Calculate distance and speed
     vessel_df["dist_km"] = haversine(vessel_df["lat_prev"], vessel_df["lon_prev"],
                                       vessel_df["Latitude"], vessel_df["Longitude"])
-    vessel_df["time_diff_sec"] = (vessel_df["timestamp"] - vessel_df["time_prev"]).dt.total_seconds()
     vessel_df["speed_kmph"] = vessel_df["dist_km"] / (vessel_df["time_diff_sec"] / 3600)
 
     # Flag anomalies
