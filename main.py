@@ -18,6 +18,17 @@ def main():
 
         if anomalies is not None and not anomalies.empty:
             print("\nTotal anomalies found:", len(anomalies))
+            total_rows = len(df)
+            spoofed_rows = len(anomalies)
+            percentage = (spoofed_rows/total_rows)*100
+            print(f"Percentage of spoofed records: {percentage:.2f}%")
+
+            # % of vessels that had at least 1 anomaly
+            affected_vessels = anomalies["MMSI"].nunique()
+            total_vessels = df["MMSI"].nunique()
+            vessel_percentage = (affected_vessels / total_vessels) * 100
+
+            print(f"Vessels with spoofing: {affected_vessels}/{total_vessels} ({vessel_percentage:.2f}%)")
             print(anomalies.head())
             anomalies.to_csv("spoofing_anomalies_output.csv", index=False)
             print("\nSaved to 'spoofing_anomalies_output.csv'")
