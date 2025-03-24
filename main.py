@@ -1,11 +1,12 @@
 from data_loader import load_ais_data
 from spoofing_detector import detect_spoofing
 from parallel_runner import run_parallel_detection
+from neighbor_detector import detect_neighbor_conflicts  # <-- Make sure this is imported
 
 # Step 1: Define input file
 DATA_PATH = "C:/Users/lukan/Downloads/aisdk-2025-03-14/aisdk-2025-03-14.csv" # Update path if needed
-RUN_ALL_VESSELS = True  # Set to False to test single vessel
-ANOMALY_THRESHOLD = 2   # Minimum anomalies required to flag a vessel
+RUN_ALL_VESSELS = True
+ANOMALY_THRESHOLD = 2
 
 def main():
     df = load_ais_data(DATA_PATH)
@@ -16,12 +17,12 @@ def main():
         print("\nRunning spoofing detection in parallel for all vessels...")
         anomalies = run_parallel_detection(df)
 
-        # Filter vessels with too few anomalies
+        # === Filter by anomaly threshold
         vessel_counts = anomalies.groupby("MMSI").size()
         reliable_mmsis = vessel_counts[vessel_counts >= ANOMALY_THRESHOLD].index
         filtered_anomalies = anomalies[anomalies["MMSI"].isin(reliable_mmsis)]
 
-        # === Statistics ===
+        # === Summary statistics
         print(f"\nTotal raw anomalies found: {len(anomalies)}")
         print(f"Filtered anomalies (≥{ANOMALY_THRESHOLD} per vessel): {len(filtered_anomalies)}")
 
@@ -43,8 +44,25 @@ def main():
         else:
             print("\nNo vessels passed the anomaly threshold.")
 
+        # === PART C: Neighbor Conflict Detection
+        print("\nRunning Part C: Neighbor conflict detection (grid-based)...")
+        try:
+            # Only keep needed columns to save memory
+            reduced_df = df[["timestamp", "Latitude", "Longitude", "MMSI"]].copy()
+            neighbor_conflicts = detect_neighbor_conflicts(reduced_df, time_window='5min',grid_size=0.005)
+
+            if not neighbor_conflicts.empty:
+                print(f"Conflicting positions found: {len(neighbor_conflicts)} records")
+                print(neighbor_conflicts.head())
+                neighbor_conflicts.to_csv("neighbor_conflicts_output.csv", index=False)
+                print("Saved to 'neighbor_conflicts_output.csv'")
+            else:
+                print("No conflicting positions detected in nearby vessels.")
+        except Exception as e:
+            print("Part C failed due to memory or data issue:")
+            print(str(e))
+
     else:
-        # === Single vessel test mode ===
         sample_mmsi = df["MMSI"].unique()[0]
         vessel_df = df[df["MMSI"] == sample_mmsi]
 
