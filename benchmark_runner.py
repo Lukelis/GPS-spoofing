@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from data_loader import load_ais_data
 from parallel_runner import run_parallel_detection
 from run_sequential_detection import run_sequential_detection
+#from run_parallel_batched import run_parallel_batched <- for testing purposes(putting vessels into batches before sending them to workers)
 
 cpu_usage_log = []
 mem_usage_log = []
@@ -66,27 +67,36 @@ def plot_usage(cpu_seq, mem_seq, cpu_par, mem_par):
 
     plt.tight_layout()
     plt.savefig("benchmark_cpu_memory_usage.png")
-    print("📊 Saved resource usage plot to 'benchmark_cpu_memory_usage.png'")
+    print("Saved resource usage plot to 'benchmark_cpu_memory_usage.png'")
 
 def main():
     DATA_PATH = "C:/Users/lukan/Downloads/aisdk-2025-03-14/aisdk-2025-03-14.csv"
     df = load_ais_data(DATA_PATH)
 
-    print("\n🔹 Running SEQUENTIAL detection...")
+    print("\nRunning SEQUENTIAL detection...")
     t_seq, result_seq, cpu_seq, mem_seq = run_with_tracking(run_sequential_detection, df, label="Sequential")
 
-    print("\n🔹 Running PARALLEL detection...")
-    t_par, result_par, cpu_par, mem_par = run_with_tracking(run_parallel_detection, df, label="Parallel")
+#     print("\nRunning PARALLEL (batched) detection...")
+#     t_par, result_par, cpu_par, mem_par = run_with_tracking(
+#         lambda df: run_parallel_batched(df, batch_size=151),
+#         df, label="Parallel (batched)"
+# ) #Only used for testing batching..
+    print("\nRunning PARALLEL detection...")
+    t_par, result_par, cpu_par, mem_par = run_with_tracking(
+    run_parallel_detection,
+    df,
+    label="Parallel"
+)
 
     speedup = t_seq / t_par if t_par > 0 else float("inf")
-    print(f"\n⚡ Speedup: {speedup:.2f}x")
+    print(f"\n Speedup: {speedup:.2f}x")
 
     plt.figure(figsize=(6, 4))
     plt.bar(["Sequential", "Parallel"], [t_seq, t_par], color=['gray', 'green'])
     plt.title("Execution Time")
     plt.ylabel("Time (s)")
     plt.savefig("benchmark_execution_time.png")
-    print("📊 Saved runtime chart to 'benchmark_execution_time.png'")
+    print("Saved runtime chart to 'benchmark_execution_time.png'")
 
     plot_usage(cpu_seq, mem_seq, cpu_par, mem_par)
 
