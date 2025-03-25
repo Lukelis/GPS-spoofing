@@ -7,7 +7,7 @@ import pandas as pd
 # Step 1: Define input file
 DATA_PATH = "C:/Users/lukan/Downloads/aisdk-2025-03-14/aisdk-2025-03-14.csv"
 RUN_ALL_VESSELS = True
-ANOMALY_THRESHOLD = 5
+ANOMALY_THRESHOLD = 10
 
 def main():
     df = load_ais_data(DATA_PATH)
@@ -61,10 +61,10 @@ def main():
 
                 # Filter Part C to MMSIs with ≥2 conflict events
                 c_counts = neighbor_conflicts.groupby("MMSI").size()
-                reliable_c_mmsis = c_counts[c_counts >= 2].index
+                reliable_c_mmsis = c_counts[c_counts >= 3].index
                 neighbor_conflicts = neighbor_conflicts[neighbor_conflicts["MMSI"].isin(reliable_c_mmsis)]
 
-                print(f"Filtered neighbor conflict vessels (≥2 records): {neighbor_conflicts['MMSI'].nunique()}")
+                print(f"Filtered neighbor conflict vessels (≥3 records): {neighbor_conflicts['MMSI'].nunique()}")
                 neighbor_conflicts.to_csv("neighbor_conflicts_output.csv", index=False)
                 print("Saved to 'neighbor_conflicts_output.csv'")
             else:
