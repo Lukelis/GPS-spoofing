@@ -3,11 +3,12 @@ from spoofing_detector import detect_spoofing
 from parallel_runner import run_parallel_detection
 from neighbor_detector import detect_neighbor_conflicts
 import pandas as pd
+import os
 
-# Step 1: Define input file
-DATA_PATH = "C:/Users/lukan/Downloads/aisdk-2025-03-14/aisdk-2025-03-14.csv"
+DATA_PATH = "aisdk-2025-03-14.csv"
 RUN_ALL_VESSELS = True
 ANOMALY_THRESHOLD = 10
+os.makedirs("output", exist_ok=True)
 
 def main():
     df = load_ais_data(DATA_PATH)
@@ -39,7 +40,7 @@ def main():
 
         if not filtered_anomalies.empty:
             print(filtered_anomalies.head())
-            filtered_anomalies.to_csv("spoofing_anomalies_output.csv", index=False)
+            filtered_anomalies.to_csv("output/spoofing_anomalies_output.csv", index=False)
             print("\nSaved to 'spoofing_anomalies_output.csv'")
         else:
             print("\nNo vessels passed the anomaly threshold.")
@@ -65,7 +66,7 @@ def main():
                 neighbor_conflicts = neighbor_conflicts[neighbor_conflicts["MMSI"].isin(reliable_c_mmsis)]
 
                 print(f"Filtered neighbor conflict vessels (≥3 records): {neighbor_conflicts['MMSI'].nunique()}")
-                neighbor_conflicts.to_csv("neighbor_conflicts_output.csv", index=False)
+                neighbor_conflicts.to_csv("output/neighbor_conflicts_output.csv", index=False)
                 print("Saved to 'neighbor_conflicts_output.csv'")
             else:
                 print("Conflict detection ran successfully, but no groups passed the filter.")
@@ -94,7 +95,7 @@ def main():
             print(f"  Vessels only in C  : {only_c}")
             print(f"  Vessels in both    : {overlap}")
 
-            combined_df.to_csv("final_spoofing_combined.csv", index=False)
+            combined_df.to_csv("output/final_spoofing_combined.csv", index=False)
             print("\nSaved combined anomalies (A+B+C) to 'final_spoofing_combined.csv'")
             print(f"→ Total unique spoofing records: {len(combined_df)}")
             print(f"→ Total vessels involved: {total_spoofed_vessels}/{total_vessels} ({100 * total_spoofed_vessels / total_vessels:.2f}%)")
